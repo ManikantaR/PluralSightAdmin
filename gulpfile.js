@@ -34,7 +34,7 @@ gulp.task('connect',function(){
 //has dependency on connect
 gulp.task('open',['connect'],function(){
     gulp.src('dist/index.html')
-        .pipe(open({uri:config.devBaseUrl+":"+config.port+'/'}));
+        .pipe(open({uri: config.devBaseUrl + ":" + config.port + '/'}));
 });
 
 //copy html files from src to dist
