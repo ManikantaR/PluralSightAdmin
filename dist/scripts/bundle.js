@@ -32082,9 +32082,9 @@ var Header = React.createClass({displayName: "Header",
 		return (
         React.createElement("nav", {className: "navbar navbar-default"}, 
           React.createElement("div", {className: "container-fluid"}, 
-              React.createElement(Link, {to: "app", className: "navbar-brand"}, 
-                React.createElement("img", {src: "images/pluralsight-logo.png"})
-              ), 
+              "//", React.createElement(Link, {to: "app", className: "navbar-brand"}, 
+               "// ", React.createElement("img", {src: "images/pluralsight-logo.png"}), 
+              "//"), 
               React.createElement("ul", {className: "nav navbar-nav"}, 
                 React.createElement("li", null, React.createElement(Link, {to: "app"}, "Home")), 
                 React.createElement("li", null, React.createElement(Link, {to: "authors"}, "Authors")), 
@@ -32145,7 +32145,7 @@ var Header = require('./commons/header');
 
 (function(win){
 
-"user strict";
+"use strict";
 var App = React.createClass({displayName: "App",
     render: function(){
         

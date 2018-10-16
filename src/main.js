@@ -7,7 +7,7 @@ var Header = require('./commons/header');
 
 (function(win){
 
-"user strict";
+"use strict";
 var App = React.createClass({
     render: function(){
         
