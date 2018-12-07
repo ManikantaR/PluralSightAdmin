@@ -16,6 +16,7 @@ var config = {
         html:'./src/*.html',
         dist:'./dist',
         js:'./src/**/*.js',
+        images:'./src/images/*.*',
         css:['./node_modules/bootstrap/dist/css/bootstrap.min.css',
                 './node_modules/bootstrap/dist/css/bootstrap-theme.min.css'],
         mainJs:'./src/main.js',
@@ -72,7 +73,18 @@ gulp.task('lint',function(){
 })
 
 
-gulp.task('default',['html','open','js','css','lint','watch']);
+gulp.task('images',function(){
+     gulp.src(config.paths.images)
+                .pipe(gulp.dest( config.paths.dist+"/images")).pipe(connect.reload());
+
+    gulp.src('/src/favicon.ico')
+         .pipe(gulp.dest( config.paths.dist))
+         .pipe(connect.reload());
+                
+
+})
+
+gulp.task('default',['html','open','js','images','css','lint','watch']);
 
 
 gulp.task('watch',function(){
