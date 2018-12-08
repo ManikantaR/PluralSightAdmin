@@ -45524,6 +45524,14 @@ var ActionTypes = require('../consants/appConstants');
 var AuthorApi = require('../api/authorapi');
 
 var AuthorActions = {
+    updateAuthor: function(author){
+        var updatedAuthor = AuthorApi.saveAuthor(author);
+        Dispatcher.dispatch({
+            actionType: ActionTypes.UPDATE_AUTHOR,
+            author: updatedAuthor
+        });
+    },
+
     createAuthor: function(author){
         var newAuthor = AuthorApi.saveAuthor(author);
 
@@ -45531,12 +45539,42 @@ var AuthorActions = {
             actionType: ActionTypes.CREATE_AUTHOR,
             author: newAuthor
         });
+    },
+
+    deleteAuthor: function(id){
+        AuthorApi.deleteAuthor(id);
+
+        Dispatcher.dispatch({
+            actionType: ActionTypes.DELETE_AUTHOR,
+            id: id
+        });
     }
 };
 
 module.exports = AuthorActions;
 
-},{"../api/authorapi":205,"../consants/appConstants":217,"../dispatcher/appDispatcher":218}],205:[function(require,module,exports){
+},{"../api/authorapi":206,"../consants/appConstants":218,"../dispatcher/appDispatcher":219}],205:[function(require,module,exports){
+"use strict";
+
+var Dispatcher = require('../dispatcher/appDispatcher');
+var ActionTypes = require('../consants/appConstants');
+var AuthorApi = require('../api/authorapi');
+
+var InitializeAction = {
+    initialize: function(){        
+        Dispatcher.dispatch({
+            actionType: ActionTypes.INITIALIZE,
+            initialData: {
+                authors: AuthorApi.getAllAuthors()
+            }            
+        });
+    }
+
+};
+
+module.exports = InitializeAction;
+
+},{"../api/authorapi":206,"../consants/appConstants":218,"../dispatcher/appDispatcher":219}],206:[function(require,module,exports){
 "use strict";
 
 //This file is mocking a web API by hitting hard coded data.
@@ -45588,7 +45626,7 @@ var AuthorApi = {
 
 module.exports = AuthorApi;
 
-},{"./authordata":206,"lodash":6}],206:[function(require,module,exports){
+},{"./authordata":207,"lodash":6}],207:[function(require,module,exports){
 module.exports = {
 	authors: 
 	[
@@ -45610,7 +45648,7 @@ module.exports = {
 	]
 };
 
-},{}],207:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45644,7 +45682,7 @@ var About = React.createClass({displayName: "About",
 
 module.exports = About;
 
-},{"react":202}],208:[function(require,module,exports){
+},{"react":202}],209:[function(require,module,exports){
 /*eslint-disable strict */ //Disabling check because we can't run strict mode. Need global vars.
 
 var React = require('react');
@@ -45667,7 +45705,7 @@ var App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"./common/header":213,"jquery":5,"react":202,"react-router":33}],209:[function(require,module,exports){
+},{"./common/header":214,"jquery":5,"react":202,"react-router":33}],210:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45707,23 +45745,33 @@ var AuthorForm = React.createClass({displayName: "AuthorForm",
 
 module.exports = AuthorForm;
 
-},{"../common/textInput":214,"react":202}],210:[function(require,module,exports){
+},{"../common/textInput":215,"react":202}],211:[function(require,module,exports){
 "use strict";
 
 var React = require("react");
 var Router = require("react-router");
 var Link = Router.Link;
-
+var AuthorActions = require("../../actions/authorActions");
+var toastr = require("toastr");
 
 var AuthorList = React.createClass({displayName: "AuthorList",
   propTypes: {
     authors: React.PropTypes.array.isRequired
   },
 
+  deleteAuhtor: function(id, event) {
+    event.preventDefault();
+    AuthorActions.deleteAuthor(id);
+    toastr.success("Author deleted!");
+  },
+
   render: function() {
     var createAuthorRow = function(author) {
       return (
         React.createElement("tr", {key: author.id}, 
+          React.createElement("td", null, 
+            React.createElement("a", {href: "#", onClick: this.deleteAuhtor.bind(this, author.id)}, "Delete")
+          ), 
           React.createElement("td", null, 
             React.createElement(Link, {to: "manageAuthor", params: { id: author.id}}, 
               author.id
@@ -45740,6 +45788,7 @@ var AuthorList = React.createClass({displayName: "AuthorList",
       React.createElement("div", null, 
         React.createElement("table", {className: "table"}, 
           React.createElement("thead", null, 
+            React.createElement("th", null, "Delete"), 
             React.createElement("th", null, "ID"), 
             React.createElement("th", null, "Name")
           ), 
@@ -45751,7 +45800,7 @@ var AuthorList = React.createClass({displayName: "AuthorList",
 });
 
 module.exports = AuthorList;
-},{"react":202,"react-router":33}],211:[function(require,module,exports){
+},{"../../actions/authorActions":204,"react":202,"react-router":33,"toastr":203}],212:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45775,6 +45824,18 @@ var Authors = React.createClass({displayName: "Authors",
         }        
     },     
 
+    componentWillMount: function(){
+        AuthorStore.addChangeListener(this._onChange);
+    },
+
+    componentWillUnmount: function(){
+        AuthorStore.removeChangeListener(this._onChange);
+    },
+
+    _onChange: function(){
+    this.setState({authors: AuthorStore.getAllAuthors()});
+    },
+
     render: function(){       
         return (            
             React.createElement("div", null, 
@@ -45788,7 +45849,7 @@ var Authors = React.createClass({displayName: "Authors",
 
 module.exports = Authors;
 
-},{"../../actions/authorActions":204,"../../api/authorapi":205,"../../store/authorStore":221,"./authorList":210,"react":202,"react-router":33}],212:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../api/authorapi":206,"../../store/authorStore":222,"./authorList":211,"react":202,"react-router":33}],213:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45862,7 +45923,13 @@ var ManageAuthorPage = React.createClass({displayName: "ManageAuthorPage",
 			return;
 		}
 
-		AuthorActions.createAuthor(this.state.author);
+        if(this.state.author.id){
+            AuthorActions.createAuthor(this.state.author);
+        }
+        else{
+            AuthorActions.updateAuthor(this.state.author);
+        }
+		
 		this.setState({dirty: false});
 		toastr.success('Author saved.');
 		this.transitionTo('authors');
@@ -45881,7 +45948,7 @@ var ManageAuthorPage = React.createClass({displayName: "ManageAuthorPage",
 
 module.exports = ManageAuthorPage;
 
-},{"../../actions/authorActions":204,"../../store/authorStore":221,"./authorForm":209,"react":202,"react-router":33,"toastr":203}],213:[function(require,module,exports){
+},{"../../actions/authorActions":204,"../../store/authorStore":222,"./authorForm":210,"react":202,"react-router":33,"toastr":203}],214:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45908,7 +45975,7 @@ var Header = React.createClass({displayName: "Header",
 });
 
 module.exports = Header;
-},{"react":202,"react-router":33}],214:[function(require,module,exports){
+},{"react":202,"react-router":33}],215:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45949,7 +46016,7 @@ var Input = React.createClass({displayName: "Input",
 
 module.exports = Input;
 
-},{"react":202}],215:[function(require,module,exports){
+},{"react":202}],216:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45967,7 +46034,7 @@ var Home = React.createClass({displayName: "Home",
 
 module.exports = Home;
 
-},{"react":202}],216:[function(require,module,exports){
+},{"react":202}],217:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -45987,33 +46054,41 @@ var NotFoundPage = React.createClass({displayName: "NotFoundPage",
 
 module.exports = NotFoundPage;
 
-},{"react":202,"react-router":33}],217:[function(require,module,exports){
+},{"react":202,"react-router":33}],218:[function(require,module,exports){
 "use strict";
 var keyMirror = require('react/lib/keyMirror');
 
 module.exports = keyMirror({
-    CREATE_AUTHOR: null
+    INITIALIZE: null,
+    CREATE_AUTHOR: null,
+    UPDATE_AUTHOR: null,
+    DELETE_AUTHOR: null    
 });
 
-},{"react/lib/keyMirror":187}],218:[function(require,module,exports){
+},{"react/lib/keyMirror":187}],219:[function(require,module,exports){
 "use strict";
 
 var Dispatcher = require('flux').Dispatcher;
 
 module.exports = new Dispatcher();
 
-},{"flux":2}],219:[function(require,module,exports){
+},{"flux":2}],220:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
 var routes = require('./route');
 var Router = require('react-router');
 var App = require('./components/app');
+var InitializeActions = require('./actions/initializeActions');
+
+
+InitializeActions.initialize();
+
 Router.run(routes, Router.HistoryLocation, function(Handler){
     React.render(React.createElement(Handler, null), document.getElementById('app'));
 });
 
-},{"./components/app":208,"./route":220,"react":202,"react-router":33}],220:[function(require,module,exports){
+},{"./actions/initializeActions":205,"./components/app":209,"./route":221,"react":202,"react-router":33}],221:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -46038,47 +46113,70 @@ var routes = (
 
 module.exports = routes;
 
-},{"./components/about":207,"./components/app":208,"./components/authors/authorpage":211,"./components/authors/manageAuthorPage":212,"./components/hompepage":215,"./components/notFoundPage":216,"react":202,"react-router":33}],221:[function(require,module,exports){
+},{"./components/about":208,"./components/app":209,"./components/authors/authorpage":212,"./components/authors/manageAuthorPage":213,"./components/hompepage":216,"./components/notFoundPage":217,"react":202,"react-router":33}],222:[function(require,module,exports){
 "use strict";
 
-var Dispatcher = require('../dispatcher/appDispatcher');
-var ActionTypes = require('../consants/appConstants');
-var assign = require('object-assign');
-var EventEmitter = require('events').EventEmitter;
-var _ = require('lodash');
+var Dispatcher = require("../dispatcher/appDispatcher");
+var ActionTypes = require("../consants/appConstants");
+var assign = require("object-assign");
+var EventEmitter = require("events").EventEmitter;
+var _ = require("lodash");
 
 var _authors = [];
 var AuthorStore = assign({}, EventEmitter.prototype, {
-    addChangeListener: function(callback){
-        this.on('change', callback);
-    },
+  addChangeListener: function(callback) {
+    this.on("change", callback);
+  },
 
-    removeChangeListener: function(callback){
-        this.removeListener('change', callback);
-    },
+  removeChangeListener: function(callback) {
+    this.removeListener("change", callback);
+  },
 
-    emitChange: function(){
-        this.emit('change');
-    },
+  emitChange: function() {
+    this.emit("change");
+  },
 
-    getAllAuthors: function(){
-        return _authors;
-    },
+  getAllAuthors: function() {
+    return _authors;
+  },
 
-    getAuthorById: function(id){
-        return _.find(_authors, {id: id});
-    }
+  getAuthorById: function(id) {
+    return _.find(_authors, { id: id });
+  }
 });
 
-Dispatcher.register(function(action){
-    switch(action.actionType){
+Dispatcher.register(function(action) {
+  switch (action.actionType) {
+    case ActionTypes.INITIALIZE:
+      _authors = action.initialData.authors;
+      console.table(_authors);
+      AuthorStore.emitChange();
+      break;
 
-        case ActionTypes.CREATE_AUTHOR :
-         _authors.push(action.author);
-         AuthorStore.emitChange();
-    }
+    case ActionTypes.CREATE_AUTHOR:
+      _authors.push(action.author);
+      AuthorStore.emitChange();
+      break;
+
+    case ActionTypes.UPDATE_AUTHOR:
+      var exstingAuthor = _.find(_authors, { id: action.author.id });
+      var exstingAuthorindex = _.indexOf(_authors, exstingAuthor);
+      _authors.splice(exstingAuthorindex, 1, action.author);
+      AuthorStore.emitChange();
+      break;
+
+      case ActionTypes.DELETE_AUTHOR:
+      _.remove(_authors, function(author){
+            return action.id === author.id;
+      });
+
+      AuthorStore.emitChange();
+      break;
+
+    default:
+  }
 });
 
 module.exports = AuthorStore;
 
-},{"../consants/appConstants":217,"../dispatcher/appDispatcher":218,"events":1,"lodash":6,"object-assign":7}]},{},[219]);
+},{"../consants/appConstants":218,"../dispatcher/appDispatcher":219,"events":1,"lodash":6,"object-assign":7}]},{},[220]);
